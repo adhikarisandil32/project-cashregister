@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <input type="number" id="cash" />
+    <button id="purchase-btn">Purchase</button>
+    <div id="change-due"></div>
+
+    <script>
+      let price = 19.5
+      let cid = [
+        ["PENNY", 1.01],
+        ["NICKEL", 2.05],
+        ["DIME", 3.1],
+        ["QUARTER", 4.25],
+        ["ONE", 90],
+        ["FIVE", 55],
+        ["TEN", 20],
+        ["TWENTY", 60],
+        ["ONE HUNDRED", 100],
+      ]
+      const currencyValue = [
+        ["PENNY", 0.01],
+        ["NICKEL", 0.05],
+        ["DIME", 0.1],
+        ["QUARTER", 0.25],
+        ["ONE", 1],
+        ["FIVE", 5],
+        ["TEN", 10],
+        ["TWENTY", 20],
+        ["ONE HUNDRED", 100],
+      ]
+
+      const inputElem = document.getElementById("cash")
+      const purchaseBtn = document.getElementById("purchase-btn")
+      const dueChangeElem = document.getElementById("change-due")
+
+      purchaseBtn.addEventListener("click", () => {
+        const cash = Number(inputElem.value)
+
+        if (cash < price) return alert("Customer does not have enough money to purchase the item")
+        if (cash === price) return (dueChangeElem.innerText = "No change due - customer paid with exact cash")
+        let changeAmt = Number((cash - price).toFixed(2))
+
+        const totalCashInDrawer = Number(cid.reduce((accumulator, currentValue) => accumulator + currentValue[1], 0).toFixed(2))
+        if (changeAmt > totalCashInDrawer) return (dueChangeElem.innerText = "Status: INSUFFICIENT_FUNDS")
+
+        // to check if the currencyValue below changeAmt will sum up to equal or greater than changeAmt
+        // changeAmt = 16, then currencyValue starting immediately below 16 i.e. tens, fives, ones, ... should add up to more than or equal to 16
+        const cidBelowChangeAmt = cid.filter((_, idx) => currencyValue[idx][1] < changeAmt)
+        const sumOfCidBelowChangeAmt = cidBelowChangeAmt.reduce((acc, cVal) => acc + cVal[1], 0)
+
+        if (sumOfCidBelowChangeAmt < changeAmt) return (dueChangeElem.innerText = "Status: INSUFFICIENT_FUNDS")
+
+        const changeAmtType = []
+        for (let i = cid.length - 1; i >= 0; i--) {
+          let count = 0
+          let currencyTypeActive = currencyValue[i][0]
+          while (changeAmt >= currencyValue[i][1] && cid[i][1] > 0) {
+            // debugger
+            changeAmt = Number((changeAmt - currencyValue[i][1]).toFixed(2))
+            cid[i][1] = Number((cid[i][1] - currencyValue[i][1]).toFixed(2))
+            count++
+          }
+
+          if (count > 0) {
+            changeAmtType[i] = [currencyValue[i][0], Number((count * currencyValue[i][1]).toFixed(2))]
+          }
+        }
+
+        const remainingCid = Number(cid.reduce((accumulator, currentValue) => accumulator + currentValue[1], 0).toFixed(2))
+
+        if (remainingCid > 0) {
+          const displayMsg = changeAmtType.reverse().reduce((accumulator, currentValue, idx) => {
+            return idx === changeAmtType.length - 1
+              ? accumulator + `${currentValue[0]}: $${currentValue[1]}`
+              : accumulator + `${currentValue[0]}: $${currentValue[1]} `
+          }, "Status: OPEN ")
+          dueChangeElem.innerText = displayMsg
+        } else {
+          const displayMsg = changeAmtType.reverse().reduce((accumulator, currentValue, idx) => {
+            return idx === changeAmtType.length - 1
+              ? accumulator + `${currentValue[0]}: $${currentValue[1]}`
+              : accumulator + `${currentValue[0]}: $${currentValue[1]} `
+          }, "Status: CLOSED ")
+          dueChangeElem.innerText = displayMsg
+        }
+      })
+    </script>
+  </body>
+</html>
